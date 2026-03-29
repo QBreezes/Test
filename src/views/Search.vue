@@ -19,7 +19,6 @@
         </template>
       </el-input>
       <div class="search-tips">
-        <el-switch v-model="useRealApi" active-text="真实API" inactive-text="模拟数据" />
         <span class="tip-text">热门基金：000001、000011、110022、161725</span>
       </div>
     </el-card>
@@ -75,11 +74,7 @@
 
     <!-- 无结果提示 -->
     <el-card v-if="searched && searchResults.length === 0" shadow="never" class="results-card">
-      <el-empty description="未找到相关基金">
-        <el-button type="primary" @click="useRealApi = false; handleSearch()">
-          使用模拟数据搜索
-        </el-button>
-      </el-empty>
+      <el-empty description="未找到相关基金，请检查基金代码或名称" />
     </el-card>
 
     <!-- 基金详情弹窗 -->
@@ -182,7 +177,6 @@ const searchKeyword = ref('')
 const searching = ref(false)
 const searched = ref(false)
 const searchResults = ref<Fund[]>([])
-const useRealApi = ref(true)
 
 const detailVisible = ref(false)
 const addPositionVisible = ref(false)
@@ -211,7 +205,7 @@ watch(() => [positionForm.value.amount, positionForm.value.buyNetValue], () => {
 // 图表周期变化时重新加载
 watch(chartPeriod, async () => {
   if (currentFund.value && detailVisible.value) {
-    historyData.value = await getFundHistory(currentFund.value.code, useRealApi.value, 1, chartPeriod.value)
+    historyData.value = await getFundHistory(currentFund.value.code, 1, chartPeriod.value)
     await nextTick()
     renderChart()
   }
@@ -230,15 +224,16 @@ const handleSearch = async () => {
 
     // 如果是纯数字，当作基金代码查询
     if (/^\d+$/.test(keyword)) {
-      const fund = await getFundInfo(keyword, useRealApi.value)
+      const fund = await getFundInfo(keyword)
       if (fund) {
         searchResults.value = [fund]
       } else {
         searchResults.value = []
       }
     } else {
-      // 否则使用搜索（暂时用模拟数据）
-      searchResults.value = [getMockFundByName(keyword)]
+      // 使用基金名称搜索
+      const funds = await searchFunds(keyword)
+      searchResults.value = funds
     }
 
     searched.value = true
@@ -259,33 +254,12 @@ onMounted(() => {
   }
 })
 
-// 模拟按名称搜索
-function getMockFundByName(keyword: string): Fund {
-  const mockFunds: Fund[] = [
-    { code: '000001', name: '华夏成长混合', type: '混合型', currentNetValue: 1.2340, dailyChange: 0.0234, netValueDate: '2026-03-29' },
-    { code: '000011', name: '华夏大盘精选', type: '混合型', currentNetValue: 3.8920, dailyChange: 0.0156, netValueDate: '2026-03-29' },
-    { code: '110022', name: '易方达消费行业', type: '股票型', currentNetValue: 5.4320, dailyChange: 0.0345, netValueDate: '2026-03-29' },
-    { code: '161725', name: '招商中证白酒指数', type: '指数型', currentNetValue: 1.2345, dailyChange: 0.0289, netValueDate: '2026-03-29' },
-    { code: '260108', name: '景顺长城新兴成长', type: '混合型', currentNetValue: 2.8760, dailyChange: -0.0087, netValueDate: '2026-03-29' }
-  ]
-
-  const found = mockFunds.find(f => f.name.includes(keyword) || f.code.includes(keyword))
-  return found || {
-    code: '000000',
-    name: `搜索: ${keyword}`,
-    type: '混合型',
-    currentNetValue: 1.5 + Math.random(),
-    dailyChange: (Math.random() - 0.5) * 0.1,
-    netValueDate: new Date().toISOString().split('T')[0]
-  }
-}
-
 const showFundDetail = async (fund: Fund) => {
   currentFund.value = fund
   detailVisible.value = true
 
   // 获取历史数据
-  historyData.value = await getFundHistory(fund.code, useRealApi.value, 1, chartPeriod.value)
+  historyData.value = await getFundHistory(fund.code, 1, chartPeriod.value)
 
   // 渲染图表
   await nextTick()

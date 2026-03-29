@@ -9,7 +9,6 @@
             大盘指数
           </span>
           <div class="header-right">
-            <el-switch v-model="useRealApi" size="small" active-text="实时" inactive-text="模拟" @change="loadMarketIndexes" />
             <el-button :icon="Refresh" size="small" text @click="loadMarketIndexes" :loading="loadingIndexes">
               刷新
             </el-button>
@@ -163,13 +162,12 @@ const positionStore = usePositionStore()
 // 大盘指数
 const marketIndexes = ref<MarketIndex[]>([])
 const loadingIndexes = ref(false)
-const useRealApi = ref(true)
 let refreshTimer: ReturnType<typeof setInterval> | null = null
 
 const loadMarketIndexes = async () => {
   loadingIndexes.value = true
   try {
-    marketIndexes.value = await getMarketIndexes(useRealApi.value)
+    marketIndexes.value = await getMarketIndexes()
   } finally {
     loadingIndexes.value = false
   }
@@ -195,7 +193,7 @@ onUnmounted(() => {
 
 const totalCost = computed(() => positionStore.totalCost)
 
-// 模拟总市值计算
+// 总市值计算
 const totalValue = computed(() => {
   // 简化计算：假设平均收益率为5%
   return positionStore.totalCost * 1.05

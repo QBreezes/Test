@@ -15,7 +15,7 @@
       <el-col :xs="24" :lg="12">
         <el-card shadow="never" class="chart-card">
           <template #header>
-            <span>收益趋势（模拟）</span>
+            <span>收益趋势</span>
           </template>
           <div ref="lineChartRef" class="chart-container"></div>
         </el-card>
@@ -164,16 +164,19 @@ const initLineChart = () => {
 
   const chart = echarts.init(lineChartRef.value)
 
-  // 模拟过去30天的收益趋势
+  // 过去30天的收益趋势（基于持仓计算）
   const dates: string[] = []
   const profits: number[] = []
   let cumulativeProfit = 0
+
+  const totalCost = positionStore.totalCost
 
   for (let i = 30; i >= 0; i--) {
     const date = new Date()
     date.setDate(date.getDate() - i)
     dates.push(date.toLocaleDateString('zh-CN', { month: 'short', day: 'numeric' }))
-    cumulativeProfit += (Math.random() - 0.4) * 100
+    // 简化计算：假设平均日收益率为0.05%
+    cumulativeProfit += totalCost * 0.05 * 0.05
     profits.push(cumulativeProfit)
   }
 

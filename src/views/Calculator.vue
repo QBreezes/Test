@@ -178,11 +178,13 @@ const singleResult = computed(() => {
 })
 
 const dcaResult = computed(() => {
-  // 模拟定投数据
+  // 定投数据（基于输入的净值区间）
   const investments = []
+  const startNetValue = dcaForm.value.currentNetValue * 0.8 // 假设起点净值为当前的80%
+
   for (let i = 0; i < dcaForm.value.periods; i++) {
-    // 模拟每期净值波动
-    const netValue = 1.0 + (Math.random() - 0.5) * 0.2
+    // 每期净值线性变化
+    const netValue = startNetValue + (dcaForm.value.currentNetValue - startNetValue) * (i / dcaForm.value.periods)
     investments.push({
       date: '',
       amount: dcaForm.value.amount,

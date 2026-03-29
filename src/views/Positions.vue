@@ -161,9 +161,9 @@ watch(() => [form.value.amount, form.value.buyNetValue], () => {
 // 统计数据
 const stats = computed(() => {
   const totalCost = positionStore.totalCost
-  // 模拟当前净值（实际应从API获取）
+  // 当前市值（基于持仓买入净值计算，假设平均收益率为5%）
   const totalValue = positionStore.positions.reduce((sum, p) => {
-    const currentNetValue = p.buyNetValue * (1 + Math.random() * 0.1 - 0.05)
+    const currentNetValue = p.buyNetValue * 1.05 // 假设5%收益
     return sum + p.shares * currentNetValue
   }, 0)
 
