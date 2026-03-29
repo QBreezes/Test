@@ -1,34 +1,5 @@
 <template>
   <div class="home-page">
-    <!-- 大盘指数看板 -->
-    <el-card class="market-index-card" shadow="never">
-      <template #header>
-        <div class="card-header">
-          <span>
-            <el-icon><TrendCharts /></el-icon>
-            大盘指数
-          </span>
-          <div class="header-right">
-            <el-button :icon="Refresh" size="small" text @click="loadMarketIndexes" :loading="loadingIndexes">
-              刷新
-            </el-button>
-          </div>
-        </div>
-      </template>
-      <el-row :gutter="16">
-        <el-col :xs="12" :sm="6" v-for="index in marketIndexes" :key="index.code">
-          <div class="index-item" :class="{ 'is-up': index.changePercent >= 0, 'is-down': index.changePercent < 0 }">
-            <div class="index-name">{{ index.name }}</div>
-            <div class="index-price">{{ index.price.toFixed(2) }}</div>
-            <div class="index-change">
-              <span>{{ index.change >= 0 ? '+' : '' }}{{ index.change.toFixed(2) }}</span>
-              <span class="change-percent">{{ index.changePercent >= 0 ? '+' : '' }}{{ index.changePercent.toFixed(2) }}%</span>
-            </div>
-          </div>
-        </el-col>
-      </el-row>
-    </el-card>
-
     <!-- 统计卡片 -->
     <el-row :gutter="20" class="stats-row">
       <el-col :xs="12" :sm="6">
@@ -151,45 +122,11 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, onMounted, onUnmounted } from 'vue'
-import { Refresh } from '@element-plus/icons-vue'
+import { computed } from 'vue'
 import { usePositionStore } from '@/stores/position'
 import { formatMoney as fmtMoney, formatPercent as fmtPercent } from '@/utils/calculator'
-import { getMarketIndexes, type MarketIndex } from '@/api/fund'
 
 const positionStore = usePositionStore()
-
-// 大盘指数
-const marketIndexes = ref<MarketIndex[]>([])
-const loadingIndexes = ref(false)
-let refreshTimer: ReturnType<typeof setInterval> | null = null
-
-const loadMarketIndexes = async () => {
-  loadingIndexes.value = true
-  try {
-    marketIndexes.value = await getMarketIndexes()
-  } finally {
-    loadingIndexes.value = false
-  }
-}
-
-// 自动刷新（每60秒）
-const startAutoRefresh = () => {
-  refreshTimer = setInterval(() => {
-    loadMarketIndexes()
-  }, 60000)
-}
-
-onMounted(() => {
-  loadMarketIndexes()
-  startAutoRefresh()
-})
-
-onUnmounted(() => {
-  if (refreshTimer) {
-    clearInterval(refreshTimer)
-  }
-})
 
 const totalCost = computed(() => positionStore.totalCost)
 
@@ -214,85 +151,6 @@ const formatPercent = (value: number) => fmtPercent(value)
 .home-page {
   max-width: 1200px;
   margin: 0 auto;
-}
-
-/* 大盘指数样式 */
-.market-index-card {
-  margin-bottom: 20px;
-}
-
-.market-index-card .card-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-}
-
-.market-index-card .card-header span {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  font-weight: 500;
-}
-
-.header-right {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-}
-
-.index-item {
-  padding: 16px;
-  border-radius: 8px;
-  background: #f5f7fa;
-  text-align: center;
-  transition: all 0.3s;
-}
-
-.index-item.is-up {
-  background: linear-gradient(135deg, #f0f9eb 0%, #e1f3d8 100%);
-}
-
-.index-item.is-down {
-  background: linear-gradient(135deg, #fef0f0 0%, #fde2e2 100%);
-}
-
-.index-name {
-  font-size: 14px;
-  color: #606266;
-  margin-bottom: 8px;
-}
-
-.index-price {
-  font-size: 24px;
-  font-weight: bold;
-  margin-bottom: 4px;
-}
-
-.is-up .index-price {
-  color: #f56c6c;
-}
-
-.is-down .index-price {
-  color: #67c23a;
-}
-
-.index-change {
-  font-size: 13px;
-  display: flex;
-  justify-content: center;
-  gap: 8px;
-}
-
-.is-up .index-change {
-  color: #f56c6c;
-}
-
-.is-down .index-change {
-  color: #67c23a;
-}
-
-.change-percent {
-  font-weight: 500;
 }
 
 /* 统计卡片样式 */

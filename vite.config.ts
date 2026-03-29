@@ -41,7 +41,12 @@ export default defineConfig({
       '/api/stock': {
         target: 'https://hq.sinajs.cn',
         changeOrigin: true,
-        rewrite: (path) => path.replace(/^\/api\/stock/, '')
+        rewrite: (path) => path.replace(/^\/api\/stock/, ''),
+        configure: (proxy) => {
+          proxy.on('proxyRes', (proxyRes) => {
+            proxyRes.headers['content-type'] = 'text/html; charset=GBK'
+          })
+        }
       }
     }
   }

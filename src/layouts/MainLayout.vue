@@ -58,6 +58,22 @@
         </div>
       </el-header>
 
+      <!-- 大盘指数固定栏 -->
+      <div class="market-bar">
+        <div
+          v-for="index in marketIndexes"
+          :key="index.code"
+          class="market-item"
+          :class="{ 'is-up': index.changePercent >= 0, 'is-down': index.changePercent < 0 }"
+        >
+          <span class="market-name">{{ index.name }}</span>
+          <span class="market-price">{{ index.price.toFixed(2) }}</span>
+          <span class="market-change">
+            {{ index.changePercent >= 0 ? '+' : '' }}{{ index.changePercent.toFixed(2) }}%
+          </span>
+        </div>
+      </div>
+
       <el-main class="layout-main">
         <router-view v-slot="{ Component }">
           <transition name="fade" mode="out-in">
@@ -74,6 +90,7 @@ import { ref, computed, onMounted, onUnmounted } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { Fold, Expand, Search } from '@element-plus/icons-vue'
 import dayjs from 'dayjs'
+import { getMarketIndexes, type MarketIndex } from '@/api/fund'
 
 const route = useRoute()
 const router = useRouter()
@@ -94,6 +111,56 @@ const menuItems = [
   { path: '/settings', title: '设置', icon: 'Setting' }
 ]
 
+// 大盘指数
+const marketIndexes = ref<MarketIndex[]>([])
+const loadingIndexes = ref(false)
+let refreshTimer: ReturnType<typeof setInterval> | null = null
+
+const loadMarketIndexes = async () => {
+  loadingIndexes.value = true
+  try {
+    marketIndexes.value = await getMarketIndexes()
+    console.log('大盘指数已更新:', marketIndexes.value)
+  } catch (e) {
+    console.error('加载大盘指数失败:', e)
+  } finally {
+    loadingIndexes.value = false
+  }
+}
+
+// 判断是否在交易时间（工作日 9:30-11:30, 13:00-15:00）
+const isTradingTime = () => {
+  const now = new Date()
+  const day = now.getDay()
+  const hour = now.getHours()
+  const minute = now.getMinutes()
+
+  // 周末不是交易时间
+  if (day === 0 || day === 6) return false
+
+  const time = hour * 60 + minute
+  // 9:30-11:30 = 570-690
+  // 13:00-15:00 = 780-900
+  return (time >= 570 && time <= 690) || (time >= 780 && time <= 900)
+}
+
+// 自动刷新（交易时间每3秒刷新）
+const startAutoRefresh = () => {
+  const doRefresh = () => {
+    if (isTradingTime()) {
+      loadMarketIndexes()
+    }
+  }
+
+  // 立即加载一次
+  loadMarketIndexes()
+
+  // 每3秒检查是否需要刷新
+  refreshTimer = setInterval(() => {
+    doRefresh()
+  }, 3000)
+}
+
 const handleSearch = () => {
   if (searchKeyword.value.trim()) {
     router.push({
@@ -113,10 +180,15 @@ const checkMobile = () => {
 onMounted(() => {
   checkMobile()
   window.addEventListener('resize', checkMobile)
+  loadMarketIndexes()
+  startAutoRefresh()
 })
 
 onUnmounted(() => {
   window.removeEventListener('resize', checkMobile)
+  if (refreshTimer) {
+    clearInterval(refreshTimer)
+  }
 })
 </script>
 
@@ -175,6 +247,50 @@ onUnmounted(() => {
   background: #f5f7fa;
   padding: 20px;
   overflow-y: auto;
+}
+
+/* 大盘指数栏 */
+.market-bar {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 24px;
+  padding: 8px 20px;
+  background: #fff;
+  border-bottom: 1px solid var(--el-border-color-light);
+  font-size: 13px;
+}
+
+.market-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 4px 12px;
+  border-radius: 4px;
+  cursor: default;
+}
+
+.market-item.is-up {
+  color: #f56c6c;
+  background: rgba(245, 108, 108, 0.1);
+}
+
+.market-item.is-down {
+  color: #67c23a;
+  background: rgba(103, 194, 58, 0.1);
+}
+
+.market-name {
+  font-weight: 500;
+}
+
+.market-price {
+  font-weight: bold;
+  margin-left: 4px;
+}
+
+.market-change {
+  font-size: 12px;
 }
 
 /* 移动端样式 */
