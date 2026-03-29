@@ -1,0 +1,42 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(cd D:/program/AI/Fund && npm install)",
+      "Bash(cd D:/program/AI/Fund && npm run dev)",
+      "Skill(update-config)",
+      "Read",
+      "Edit"
+    ]
+  },
+  "hooks": {
+    "PostToolUse": [
+      {
+        "matcher": "Write|Edit",
+        "hooks": [
+          {
+            "type": "agent",
+            "prompt": "你是一个文档同步助手。检查本次修改的文件路径（$ARGUMENTS中的tool_input.file_path或tool_response.filePath）。
+
+如果修改的是以下类型的文件，需要更新Claude.md文档：
+1. src/api/*.ts - 更新\"API接口\"部分
+2. src/views/*.vue - 更新\"页面路由\"或\"核心功能\"部分
+3. src/types/*.ts - 更新\"核心类型定义\"部分
+4. src/utils/*.ts - 更新\"收益计算公式\"或\"数据存储\"部分
+5. vite.config.ts - 更新\"开发命令\"或添加新的代理说明
+6. 需求文档.md - 同步更新进度
+
+如果需要更新，请：
+1. 读取Claude.md当前内容
+2. 根据修改内容更新对应章节
+3. 使用Edit工具更新Claude.md
+
+如果修改的是样式、注释、小bug修复，或者文件路径不在上述范围内，则不需要更新文档。",
+            "model": "haiku",
+            "timeout": 60,
+            "statusMessage": "同步更新Claude.md文档..."
+          }
+        ]
+      }
+    ]
+  }
+}
