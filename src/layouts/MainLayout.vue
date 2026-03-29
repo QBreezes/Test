@@ -87,8 +87,8 @@ const currentRoute = computed(() => route.path)
 
 const menuItems = [
   { path: '/home', title: '首页', icon: 'HomeFilled' },
-  { path: '/watchlist', title: '自选', icon: 'Star' },
   { path: '/positions', title: '持仓管理', icon: 'Wallet' },
+  { path: '/watchlist', title: '自选', icon: 'Star' },
   { path: '/calculator', title: '收益计算', icon: 'Calendar' },
   { path: '/analysis', title: '数据分析', icon: 'DataAnalysis' },
   { path: '/settings', title: '设置', icon: 'Setting' }
